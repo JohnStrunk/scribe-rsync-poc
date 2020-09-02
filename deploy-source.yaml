@@ -1,0 +1,143 @@
+---
+kind: PersistentVolumeClaim
+apiVersion: v1
+metadata:
+  name: source-wp-wordpress
+spec:
+  accessModes: ["ReadWriteOnce"]
+  dataSource:
+    kind: PersistentVolumeClaim
+    name: wp-wordpress
+  resources:
+    requests:
+      storage: 10Gi
+
+---
+kind: PersistentVolumeClaim
+apiVersion: v1
+metadata:
+  name: source-data-wp-mariadb-0
+spec:
+  accessModes: ["ReadWriteOnce"]
+  dataSource:
+    kind: PersistentVolumeClaim
+    name: data-wp-mariadb-0
+  resources:
+    requests:
+      storage: 8Gi
+
+---
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: rsync-source
+
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: Role
+metadata:
+  name: rsync-source
+rules:
+  - apiGroups:
+      - security.openshift.io
+    resourceNames:
+      - anyuid
+    resources:
+      - securitycontextconstraints
+    verbs:
+      - use
+
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  name: rsync-source
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: Role
+  name: rsync-source
+subjects:
+  - kind: ServiceAccount
+    name: rsync-source
+
+---
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: scribe-rsync-source-wp
+spec:
+  template:
+    metadata:
+      name: scribe-rsync-source-wp
+      labels:
+        app.kubernetes.io/name: rsync-source-wp
+        app.kubernetes.io/component: mover
+        app.kubernetes.io/part-of: scribe
+    spec:
+      containers:
+        - name: rsync
+          command: ["/bin/bash", "-c", "/source.sh"]
+          env:
+            - name: DESTINATION_ADDRESS
+              value: DEST_WP
+          image: quay.io/backube/scribe-mover-rsync:latest
+          imagePullPolicy: IfNotPresent
+          securityContext:
+            runAsUser: 0
+          volumeMounts:
+            - name: data
+              mountPath: /data
+            - name: keys
+              mountPath: /keys
+      restartPolicy: Never
+      serviceAccount: rsync-source
+      volumes:
+        - name: data
+          persistentVolumeClaim:
+            claimName: source-wp-wordpress
+            readOnly: true
+        - name: keys
+          secret:
+            secretName: source-secret
+            defaultMode: 0600
+
+---
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: scribe-rsync-source-maria
+spec:
+  template:
+    metadata:
+      name: scribe-rsync-source-maria
+      labels:
+        app.kubernetes.io/name: rsync-source-maria
+        app.kubernetes.io/component: mover
+        app.kubernetes.io/part-of: scribe
+    spec:
+      containers:
+        - name: rsync
+          command: ["/bin/bash", "-c", "/source.sh"]
+          env:
+            - name: DESTINATION_ADDRESS
+              value: DEST_MARIA
+          image: quay.io/backube/scribe-mover-rsync:latest
+          imagePullPolicy: IfNotPresent
+          securityContext:
+            runAsUser: 0
+          volumeMounts:
+            - name: data
+              mountPath: /data
+            - name: keys
+              mountPath: /keys
+      restartPolicy: Never
+      serviceAccount: rsync-source
+      volumes:
+        - name: data
+          persistentVolumeClaim:
+            claimName: source-data-wp-mariadb-0
+            readOnly: true
+        - name: keys
+          secret:
+            secretName: source-secret
+            defaultMode: 0600

@@ -1,0 +1,16 @@
+---
+
+wordpressPassword: mypassword
+securityContext:
+  enabled: true
+  fsGroup: 0
+  runAsUser: 0
+service.type: LoadBalancer
+mariadb.db.password: thedbpassword
+#mariadb:
+#  securityContext:
+#    enabled: true
+#    fsGroup: 0
+#    runAsUser: 0
+#  volumePermissions:
+#    enabled: true
