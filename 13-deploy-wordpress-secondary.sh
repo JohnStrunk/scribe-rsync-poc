@@ -49,4 +49,5 @@ echo "Removing volumes..."
 kubectl --kubeconfig "${DEST_KUBECONFIG}" -n wp delete pvc/wp-wordpress pvc/data-wp-mariadb-0
 
 # copy the db secret across
+kubectl --kubeconfig "${DEST_KUBECONFIG}" -n wp delete secrets/wp-mariadb
 kubectl --kubeconfig "${SRC_KUBECONFIG}" -n wp get secrets/wp-mariadb -oyaml | kubectl --kubeconfig "${DEST_KUBECONFIG}" -n wp apply -f -

@@ -1,7 +1,7 @@
 
 # ELB addresses on destination side
-DEST_WP=afd6e03efb5f6496488f5ff53a418e5c-2fff51ee525302c8.elb.us-east-1.amazonaws.com
-DEST_MARIA=ad3646301f560493498312c1f425a04e-df5519516a02fe29.elb.us-east-1.amazonaws.com
+DEST_WP=a5c96811a9f9645df803220a71fcfe30-2c6319a706acb633.elb.us-east-1.amazonaws.com
+DEST_MARIA=afc7927e51d3c4f32a52297ba09e1b8d-b96286083ca0d3c7.elb.us-east-1.amazonaws.com
 
 # KUBECONFIG for each cluster
 SRC_KUBECONFIG=~/.kube/config
